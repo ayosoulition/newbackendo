@@ -3,6 +3,9 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 
+// ================= IMPORT MENU DATA =================
+const menuData = require("./data");
+
 const app = express();
 const server = http.createServer(app);
 
@@ -17,202 +20,14 @@ app.use(
 
 app.use(express.json());
 
-// ================= MENU DATA (NOW IN BACKEND) =================
-const menuData = {
-  boissons: [
-    [
-      {
-        title: "Italiano",
-        description: "description goes here",
-        img: "italiano.jpg",
-        type: "boissons",
-        price: 10,
-        id: 1,
-      },
-      {
-        title: "Americano",
-        description: "description goes here",
-        img: "italiano.jpg",
-        type: "boissons",
-        price: 10,
-        id: 2,
-      },
-    ],
+// ================= SOCKET =================
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
-    [
-      {
-        title: "Italiano",
-        description: "description goes here",
-        img: "italiano.jpg",
-        type: "boissons",
-        price: 10,
-        id: 1,
-      },
-      {
-        title: "Americano",
-        description: "description goes here",
-        img: "italiano.jpg",
-        type: "boissons",
-        price: 10,
-        id: 2,
-      },
-    ],
-    [
-      {
-        title: "mangoJuice",
-        description: "description goes here",
-        img: "mangoJuice.jpg",
-        type: "boissons",
-        price: 13,
-        id: 3,
-      },
-      {
-        title: "Kiwi Juice",
-        img: "kiwiJuice.jpg",
-        type: "boissons",
-        description: "description goes here",
-        price: 13,
-        id: 4,
-      },
-    ],
-    [
-      {
-        title: "Orange Juice",
-        img: "OrangeJuice.jpg",
-        description: "description goes here",
-        type: "boissons",
-        price: 22,
-        id: 5,
-      },
-      {
-        title: "Lemon Juice",
-        description: "description goes here",
-        img: "lemonJuice.jpg",
-        type: "boissons",
-        price: 24,
-        id: 6,
-      },
-    ],
-  ],
-
-  boulangerie: [
-    [
-      {
-        title: "Creme Amande mini",
-        description: "description goes here",
-        img: "cremeAmande.jpg",
-        type: "boulangerie",
-        price: 2.5,
-        id: 7,
-      },
-      {
-        title: "Pain suisse mini",
-        description: "description goes here",
-        img: "painSuisse.jpg",
-        type: "boulangerie",
-        price: 2.5,
-        id: 8,
-      },
-    ],
-    [
-      {
-        title: "Creme Amande big",
-        description: "description goes here",
-        img: "cremeAmande.jpg",
-        type: "boulangerie",
-        price: 5,
-        id: 9,
-      },
-      {
-        title: "Pain suise big",
-        description: "description goes here",
-        img: "painSuisse.jpg",
-        type: "boulangerie",
-        price: 8,
-        id: 10,
-      },
-    ],
-  ],
-
-  petitDejeuner: [
-    [
-      {
-        title: "Continental BreakFast",
-        description: "description goes here",
-        img: "continentalBreakFast.jpg",
-        type: "petitDejeuner",
-        price: 20,
-        id: 11,
-      },
-      {
-        title: "American BreakFast",
-        description: "description goes here",
-        img: "americanBreakFast.jpg",
-        type: "petitDejeuner",
-        price: 25,
-        id: 12,
-      },
-    ],
-    [
-      {
-        title: "Chineese petitDejeuner",
-        description: "Chineese petitDejeuner perfect for the morning ",
-        img: "chineeseBreakFast.jpg",
-        type: "petitDejeuner",
-        price: 30,
-        id: 13,
-      },
-
-      {
-        title: "Chineese petitDejeuner",
-        description: "Chineese petitDejeuner perfect for the morning ",
-        img: "chineeseBreakFast.jpg",
-        type: "petitDejeuner",
-        price: 30,
-        id: 14,
-      },
-    ],
-  ],
-
-  glaces: [
-    [
-      {
-        title: "Chocolate",
-        description: "description goes here",
-        img: "chocolateIceCream.jpg",
-        type: "glaces",
-        price: 30,
-        id: 17,
-      },
-      {
-        title: "Pistashu",
-        description: "description goes here",
-        img: "pistashuIceCream.jpg",
-        type: "glaces",
-        price: 40,
-        id: 18,
-      },
-    ],
-    [
-      {
-        title: "Vanilla",
-        description: "description goes here",
-        img: "vanillaIceCream.jpg",
-        type: "glaces",
-        price: 30,
-        id: 19,
-      },
-      {
-        title: "Strawberry",
-        description: "description goes here",
-        img: "strawberryIceCream.jpg",
-        type: "glaces",
-        price: 30,
-        id: 20,
-      },
-    ],
-  ],
-};
 // ================= TABLES =================
 let tables = {};
 for (let i = 1; i <= 12; i++) {
@@ -225,34 +40,59 @@ let orders = {};
 // ================= HISTORY =================
 let orderHistory = [];
 
-// ================= SOCKET =================
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-});
+// ================= MENU PAGINATION LOGIC =================
+const PAGE_SIZE = 2;
 
-// ================= HELPERS =================
+// flatten 2D -> 1D
+function flattenCategory(categoryData) {
+  return categoryData.flat();
+}
+
+// 1D -> 2D pages of 2 items
+function paginate(items) {
+  const pages = [];
+
+  for (let i = 0; i < items.length; i += PAGE_SIZE) {
+    pages.push(items.slice(i, i + PAGE_SIZE));
+  }
+
+  return pages;
+}
+
+// get max ID for menu items
+function getMaxId() {
+  let maxId = 0;
+
+  Object.values(menuData)
+    .flat(2)
+    .forEach((item) => {
+      if (item.id > maxId) maxId = item.id;
+    });
+
+  return maxId;
+}
+
+// archive order
 function archiveOrder(tableId, finalStatus) {
   if (!orders[tableId]) return;
 
-  const historyEntry = {
+  orderHistory.push({
     id: Date.now(),
     tableNumber: tableId,
     order: orders[tableId].order,
     status: finalStatus,
     archivedAt: new Date().toISOString(),
-  };
-
-  orderHistory.push(historyEntry);
+  });
 }
 
 // ================= MENU ROUTES =================
+
+// GET FULL MENU
 app.get("/menu", (req, res) => {
   res.json(menuData);
 });
 
+// GET CATEGORY
 app.get("/menu/:category", (req, res) => {
   const category = req.params.category;
 
@@ -261,6 +101,94 @@ app.get("/menu/:category", (req, res) => {
   }
 
   res.json(menuData[category]);
+});
+
+// ================= ADD MENU ITEM =================
+app.post("/menu/:category", (req, res) => {
+  const { category } = req.params;
+  const newItem = req.body;
+
+  if (!menuData[category]) {
+    return res.status(404).json({ error: "Category not found" });
+  }
+
+  const item = {
+    ...newItem,
+    id: getMaxId() + 1,
+  };
+
+  const flat = flattenCategory(menuData[category]);
+  flat.push(item);
+
+  menuData[category] = paginate(flat);
+
+  io.emit("menu-update", menuData);
+
+  res.status(201).json({
+    success: true,
+    item,
+  });
+});
+
+// ================= UPDATE MENU ITEM =================
+app.put("/menu/:category/:itemId", (req, res) => {
+  const { category, itemId } = req.params;
+  const { price, title, description, img } = req.body;
+
+  if (!menuData[category]) {
+    return res.status(404).json({ error: "Category not found" });
+  }
+
+  let found = false;
+
+  menuData[category] = menuData[category].map((page) =>
+    page.map((item) => {
+      if (item.id === Number(itemId)) {
+        found = true;
+        return {
+          ...item,
+          price: price ?? item.price,
+          title: title ?? item.title,
+          description: description ?? item.description,
+          img: img ?? item.img,
+        };
+      }
+      return item;
+    }),
+  );
+
+  if (!found) {
+    return res.status(404).json({ error: "Item not found" });
+  }
+
+  io.emit("menu-update", menuData);
+
+  res.json({ success: true });
+});
+
+// ================= DELETE MENU ITEM (REORDER PAGES) =================
+app.delete("/menu/:category/:itemId", (req, res) => {
+  const { category, itemId } = req.params;
+
+  if (!menuData[category]) {
+    return res.status(404).json({ error: "Category not found" });
+  }
+
+  let flat = flattenCategory(menuData[category]);
+
+  const before = flat.length;
+
+  flat = flat.filter((item) => item.id !== Number(itemId));
+
+  if (flat.length === before) {
+    return res.status(404).json({ error: "Item not found" });
+  }
+
+  menuData[category] = paginate(flat);
+
+  io.emit("menu-update", menuData);
+
+  res.json({ success: true });
 });
 
 // ================= TABLES =================
@@ -306,7 +234,7 @@ app.post("/orders", (req, res) => {
   });
 });
 
-// ================= UPDATE STATUS =================
+// ================= UPDATE TABLE STATUS =================
 app.patch("/tables/:id/status", (req, res) => {
   const id = req.params.id;
   const { action } = req.body;

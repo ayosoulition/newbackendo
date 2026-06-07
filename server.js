@@ -8,6 +8,9 @@ const cors = require("cors");
 // ================= IMPORT MENU DATA =================
 const menuData = require("./data");
 
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const JWT_SECRET = "********";
 const app = express();
 const server = http.createServer(app);
 
@@ -42,6 +45,27 @@ let orders = {};
 
 // ================= HISTORY =================
 let orderHistory = [];
+
+const users = [
+  {
+    id: 1,
+    username: "admin",
+    password: bcrypt.hashSync("admin123", 10),
+    role: "admin",
+  },
+  {
+    id: 2,
+    username: "serveur1",
+    password: bcrypt.hashSync("serveur123", 10),
+    role: "serveur",
+  },
+  {
+    id: 3,
+    username: "caisse1",
+    password: bcrypt.hashSync("caisse123", 10),
+    role: "caisse",
+  },
+];
 
 // ================= MENU PAGINATION LOGIC =================
 const PAGE_SIZE = 2;
@@ -103,19 +127,105 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+function authenticate(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({
+      error: "No token provided",
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    req.user = decoded;
+
+    next();
+  } catch (err) {
+    return res.status(401).json({
+      error: "Invalid token",
+    });
+  }
+}
+
+function authorize(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        error: "Access denied",
+      });
+    }
+
+    next();
+  };
+}
+
 // ================= MENU ROUTES =================
 
-app.post("/upload", upload.single("image"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  const user = users.find((u) => u.username === username);
+
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      error: "Invalid credentials",
+    });
   }
+
+  const validPassword = await bcrypt.compare(password, user.password);
+
+  if (!validPassword) {
+    return res.status(401).json({
+      success: false,
+      error: "Invalid credentials",
+    });
+  }
+
+  const token = jwt.sign(
+    {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+    },
+    JWT_SECRET,
+    {
+      expiresIn: "8h",
+    },
+  );
 
   res.json({
     success: true,
-    filename: req.file.filename,
-    url: `http://localhost:3005/uploads/${req.file.filename}`,
+    token,
+    role: user.role,
   });
 });
+
+app.get("/me", authenticate, (req, res) => {
+  res.json(req.user);
+});
+
+app.post(
+  "/upload",
+  authenticate,
+  authorize("admin"),
+  upload.single("image"),
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    res.json({
+      success: true,
+      filename: req.file.filename,
+      url: `http://localhost:3005/uploads/${req.file.filename}`,
+    });
+  },
+);
 
 // GET FULL MENU
 app.get("/menu", (req, res) => {
@@ -134,7 +244,7 @@ app.get("/menu/:category", (req, res) => {
 });
 
 // ================= ADD MENU ITEM =================
-app.post("/menu/:category", (req, res) => {
+app.post("/menu/:category", authenticate, authorize("admin"), (req, res) => {
   const { category } = req.params;
   const newItem = req.body;
 
@@ -161,65 +271,75 @@ app.post("/menu/:category", (req, res) => {
 });
 
 // ================= UPDATE MENU ITEM =================
-app.put("/menu/:category/:itemId", (req, res) => {
-  const { category, itemId } = req.params;
-  const { price, title, description, img } = req.body;
+app.put(
+  "/menu/:category/:itemId",
+  authenticate,
+  authorize("admin"),
+  (req, res) => {
+    const { category, itemId } = req.params;
+    const { price, title, description, img } = req.body;
 
-  if (!menuData[category]) {
-    return res.status(404).json({ error: "Category not found" });
-  }
+    if (!menuData[category]) {
+      return res.status(404).json({ error: "Category not found" });
+    }
 
-  let found = false;
+    let found = false;
 
-  menuData[category] = menuData[category].map((page) =>
-    page.map((item) => {
-      if (item.id === Number(itemId)) {
-        found = true;
-        return {
-          ...item,
-          price: price ?? item.price,
-          title: title ?? item.title,
-          description: description ?? item.description,
-          img: img ? `http://localhost:3005/uploads/${img}` : item.img,
-        };
-      }
-      return item;
-    }),
-  );
+    menuData[category] = menuData[category].map((page) =>
+      page.map((item) => {
+        if (item.id === Number(itemId)) {
+          found = true;
+          return {
+            ...item,
+            price: price ?? item.price,
+            title: title ?? item.title,
+            description: description ?? item.description,
+            img: img ? `http://localhost:3005/uploads/${img}` : item.img,
+          };
+        }
+        return item;
+      }),
+    );
 
-  if (!found) {
-    return res.status(404).json({ error: "Item not found" });
-  }
+    if (!found) {
+      return res.status(404).json({ error: "Item not found" });
+    }
 
-  io.emit("menu-update", menuData);
+    io.emit("menu-update", menuData);
 
-  res.json({ success: true });
-});
+    res.json({ success: true });
+  },
+);
 
 // ================= DELETE MENU ITEM (REORDER PAGES) =================
-app.delete("/menu/:category/:itemId", (req, res) => {
-  const { category, itemId } = req.params;
+app.delete(
+  "/menu/:category/:itemId",
+  authenticate,
+  authorize("admin"),
+  (req, res) => {
+    const { category, itemId } = req.params;
 
-  if (!menuData[category]) {
-    return res.status(404).json({ error: "Category not found" });
-  }
+    if (!menuData[category]) {
+      return res.status(404).json({ error: "Category not found" });
+    }
 
-  let flat = flattenCategory(menuData[category]);
+    let flat = flattenCategory(menuData[category]);
 
-  const before = flat.length;
+    const before = flat.length;
 
-  flat = flat.filter((item) => item.id !== Number(itemId));
+    flat = flat.filter((item) => item.id !== Number(itemId));
 
-  if (flat.length === before) {
-    return res.status(404).json({ error: "Item not found" });
-  }
+    if (flat.length === before) {
+      return res.status(404).json({ error: "Item not found" });
+    }
 
-  menuData[category] = paginate(flat);
+    menuData[category] = paginate(flat);
 
-  io.emit("menu-update", menuData);
+    io.emit("menu-update", menuData);
 
-  res.json({ success: true });
-});
+    res.json({ success: true });
+  },
+);
 
 // ================= TABLES =================
 app.get("/tables", (req, res) => {
@@ -263,6 +383,33 @@ app.post("/orders", (req, res) => {
     order: orders[tableNumber],
   });
 });
+
+app.patch(
+  "/tables/:id/pay",
+  // authenticate,
+  // authorize("serveur"),
+  (req, res) => {
+    const id = req.params.id;
+
+    if (!tables[id]) {
+      return res.status(404).json({
+        error: "Table not found",
+      });
+    }
+
+    tables[id].status = "empty";
+
+    archiveOrder(id, "paid");
+
+    delete orders[id];
+
+    io.emit("tables-update", tables);
+
+    res.json({
+      success: true,
+    });
+  },
+);
 
 // ================= UPDATE TABLE STATUS =================
 app.patch("/tables/:id/status", (req, res) => {

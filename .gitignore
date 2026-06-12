@@ -1,1 +1,4 @@
 node_modules
+.env
+# ignore user-uploaded files (timestamp prefix) but keep seed images
+uploads/[0-9]*

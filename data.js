@@ -1,12 +1,10 @@
-const IMG_BASE = "http://192.168.1.86:3005/uploads/";
-
 const menuData = {
   boissons: [
     [
       {
         title: "Café Italiano",
         description: "Espresso intense au goût corsé et à la crème onctueuse",
-        img: `${IMG_BASE}italiano.jpg`,
+        img: "italiano.jpg",
         type: "boissons",
         price: 10,
         id: 1,
@@ -14,7 +12,7 @@ const menuData = {
       {
         title: "Café Americano",
         description: "Espresso allongé, doux et équilibré",
-        img: `${IMG_BASE}italiano.jpg`,
+        img: "italiano.jpg",
         type: "boissons",
         price: 10,
         id: 2,
@@ -25,7 +23,7 @@ const menuData = {
       {
         title: "Café Italiano",
         description: "Espresso intense au goût corsé et à la crème onctueuse",
-        img: `${IMG_BASE}italiano.jpg`,
+        img: "italiano.jpg",
         type: "boissons",
         price: 10,
         id: 3,
@@ -33,7 +31,7 @@ const menuData = {
       {
         title: "Café Americano",
         description: "Espresso allongé, doux et équilibré",
-        img: `${IMG_BASE}italiano.jpg`,
+        img: "italiano.jpg",
         type: "boissons",
         price: 10,
         id: 4,
@@ -43,14 +41,14 @@ const menuData = {
       {
         title: "Jus de Mangue",
         description: "Jus de mangue fraîche pressée, sucré et tropical",
-        img: `${IMG_BASE}mangoJuice.jpg`,
+        img: "mangoJuice.jpg",
         type: "boissons",
         price: 13,
         id: 5,
       },
       {
         title: "Jus de Kiwi",
-        img: `${IMG_BASE}kiwiJuice.jpg`,
+        img: "kiwiJuice.jpg",
         type: "boissons",
         description: "Jus de kiwi rafraîchissant, riche en vitamine C",
         price: 13,
@@ -60,7 +58,7 @@ const menuData = {
     [
       {
         title: "Jus d'Orange",
-        img: `${IMG_BASE}OrangeJuice.jpg`,
+        img: "OrangeJuice.jpg",
         description: "Jus d'orange pressé minute, naturel et vitaminé",
         type: "boissons",
         price: 22,
@@ -69,7 +67,7 @@ const menuData = {
       {
         title: "Jus de Citron",
         description: "Citronnade fraîche légèrement sucrée et désaltérante",
-        img: `${IMG_BASE}lemonJuice.jpg`,
+        img: "lemonJuice.jpg",
         type: "boissons",
         price: 24,
         id: 8,
@@ -82,7 +80,7 @@ const menuData = {
       {
         title: "Crème d'Amande Mini",
         description: "Viennoiserie feuilletée garnie de crème d'amande dorée",
-        img: `${IMG_BASE}cremeAmande.jpg`,
+        img: "cremeAmande.jpg",
         type: "boulangerie",
         price: 2.5,
         id: 8,
@@ -90,7 +88,7 @@ const menuData = {
       {
         title: "Pain Suisse Mini",
         description: "Pain suisse moelleux aux pépites de chocolat et crème pâtissière",
-        img: `${IMG_BASE}painSuisse.jpg`,
+        img: "painSuisse.jpg",
         type: "boulangerie",
         price: 2.5,
         id: 9,
@@ -100,7 +98,7 @@ const menuData = {
       {
         title: "Crème d'Amande Grand",
         description: "Grande viennoiserie feuilletée généreusement garnie de crème d'amande",
-        img: `${IMG_BASE}cremeAmande.jpg`,
+        img: "cremeAmande.jpg",
         type: "boulangerie",
         price: 5,
         id: 1,
@@ -108,7 +106,7 @@ const menuData = {
       {
         title: "Pain Suisse Grand",
         description: "Grand pain suisse moelleux aux pépites de chocolat et crème pâtissière",
-        img: `${IMG_BASE}painSuisse.jpg`,
+        img: "painSuisse.jpg",
         type: "boulangerie",
         price: 8,
         id: 10,
@@ -121,7 +119,7 @@ const menuData = {
       {
         title: "Petit Déjeuner Continental",
         description: "Café, jus d'orange, viennoiserie, beurre et confiture",
-        img: `${IMG_BASE}continentalBreakFast.jpg`,
+        img: "continentalBreakFast.jpg",
         type: "petitDejeuner",
         price: 20,
         id: 11,
@@ -129,7 +127,7 @@ const menuData = {
       {
         title: "Petit Déjeuner Américain",
         description: "Œufs, bacon, toast, pancakes et café ou jus de fruits",
-        img: `${IMG_BASE}americanBreakFast.jpg`,
+        img: "americanBreakFast.jpg",
         type: "petitDejeuner",
         price: 25,
         id: 12,
@@ -139,7 +137,7 @@ const menuData = {
       {
         title: "Petit Déjeuner Asiatique",
         description: "Sélection de mets asiatiques légers, idéale pour bien démarrer la journée",
-        img: `${IMG_BASE}chineeseBreakFast.jpg`,
+        img: "chineeseBreakFast.jpg",
         type: "petitDejeuner",
         price: 30,
         id: 13,
@@ -148,7 +146,7 @@ const menuData = {
       {
         title: "Petit Déjeuner Asiatique",
         description: "Sélection de mets asiatiques légers, idéale pour bien démarrer la journée",
-        img: `${IMG_BASE}chineeseBreakFast.jpg`,
+        img: "chineeseBreakFast.jpg",
         type: "petitDejeuner",
         price: 30,
         id: 14,
@@ -161,7 +159,7 @@ const menuData = {
       {
         title: "Glace Chocolat",
         description: "Glace onctueuse au chocolat noir belge, intense et gourmande",
-        img: `${IMG_BASE}chocolateIceCream.jpg`,
+        img: "chocolateIceCream.jpg",
         type: "glaces",
         price: 30,
         id: 17,
@@ -169,7 +167,7 @@ const menuData = {
       {
         title: "Glace Pistache",
         description: "Glace crémeuse à la pistache de Sicile, douce et parfumée",
-        img: `${IMG_BASE}pistashuIceCream.jpg`,
+        img: "pistashuIceCream.jpg",
         type: "glaces",
         price: 40,
         id: 18,
@@ -179,7 +177,7 @@ const menuData = {
       {
         title: "Glace Vanille",
         description: "Glace à la vanille de Madagascar, douce et fondante",
-        img: `${IMG_BASE}vanillaIceCream.jpg`,
+        img: "vanillaIceCream.jpg",
         type: "glaces",
         price: 30,
         id: 19,
@@ -187,7 +185,7 @@ const menuData = {
       {
         title: "Glace Fraise",
         description: "Glace aux fraises fraîches, légère et acidulée",
-        img: `${IMG_BASE}strawberryIceCream.jpg`,
+        img: "strawberryIceCream.jpg",
         type: "glaces",
         price: 30,
         id: 20,

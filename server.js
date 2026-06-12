@@ -19,6 +19,7 @@ const rawMenuData = require("./data");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const PORT = process.env.PORT || 3005;
+const BASE_URL = (process.env.BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, "");
 
 const app = express();
 const server = http.createServer(app);
@@ -176,7 +177,7 @@ app.post(
     res.json({
       success: true,
       filename: req.file.filename,
-      url: `http://localhost:${PORT}/uploads/${req.file.filename}`,
+      url: `${BASE_URL}/uploads/${req.file.filename}`,
     });
   },
 );
@@ -209,7 +210,7 @@ app.post("/menu/:category", authenticate, authorize("admin"), async (req, res) =
     const item = {
       ...req.body,
       type: category,
-      img: req.body.img ? `http://localhost:${PORT}/uploads/${req.body.img}` : "",
+      img: req.body.img ? `${BASE_URL}/uploads/${req.body.img}` : "",
       id: (await getMaxId()) + 1,
     };
     await MenuItem.create(item);
@@ -234,7 +235,7 @@ app.put("/menu/:category/:itemId", authenticate, authorize("admin"), async (req,
     if (price !== undefined) update.price = price;
     if (title !== undefined) update.title = title;
     if (description !== undefined) update.description = description;
-    if (img) update.img = `http://localhost:${PORT}/uploads/${img}`;
+    if (img) update.img = `${BASE_URL}/uploads/${img}`;
 
     await MenuItem.updateOne({ id: Number(itemId) }, update);
     const menuData = await buildMenuData();
@@ -457,7 +458,7 @@ async function seedDatabase() {
   }
 
   if (menuCount === 0) {
-    const BASE = `http://localhost:${PORT}/uploads/`;
+    const BASE = `${BASE_URL}/uploads/`;
     let counter = 1;
     const items = [];
     Object.values(rawMenuData).forEach((pages) => {
@@ -465,7 +466,7 @@ async function seedDatabase() {
         items.push({
           ...item,
           id: counter++,
-          img: item.img.replace(/https?:\/\/[^/]+\/uploads\//, BASE),
+          img: `${BASE}${item.img}`,
         });
       });
     });

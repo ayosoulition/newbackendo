@@ -489,6 +489,21 @@ async function migrateMenuLanguage() {
   if (updated > 0) console.log(`✓ Menu translated to French (${updated} items updated)`);
 }
 
+// ================= IMAGE URL MIGRATION =================
+async function migrateImageUrls() {
+  const items = await MenuItem.find({ img: { $regex: /^https?:\/\// } }).lean();
+  let updated = 0;
+  for (const item of items) {
+    const filename = item.img.replace(/^https?:\/\/[^/]+\/uploads\//, "");
+    const correctUrl = `${BASE_URL}/uploads/${filename}`;
+    if (item.img !== correctUrl) {
+      await MenuItem.updateOne({ _id: item._id }, { $set: { img: correctUrl } });
+      updated++;
+    }
+  }
+  if (updated > 0) console.log(`✓ Image URLs updated to ${BASE_URL} (${updated} items)`);
+}
+
 // ================= START =================
 mongoose
   .connect(process.env.MONGODB_URI, {
@@ -500,6 +515,7 @@ mongoose
     await seedDatabase();
     await migrateOrderFields();
     await migrateMenuLanguage();
+    await migrateImageUrls();
     server.listen(PORT, () => console.log(`✓ Server running on port ${PORT}`));
   })
   .catch((err) => {
